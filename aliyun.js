@@ -1,10 +1,7 @@
 var url = $request.url;
 //console.log(url);
 var accessToken = $prefs.valueForKey('ali_access_token') ?? '';
-var driveId = $prefs.valueForKey('ali_drive_id') ?? '';              
-var shareToken = $prefs.valueForKey('ali_share_token') ?? '';  
-
-const shareId = "BKKPcDS7zmz";
+var driveId = $prefs.valueForKey('ali_drive_id') ?? '';
 
 var headers = {
     'Referer': 'https://www.aliyundrive.com/',
@@ -60,25 +57,7 @@ if (url.indexOf('/webapi/auth.cgi') != -1) {
                 }
             };
             myResponse.body = JSON.stringify(obj);
-            const data2 = {
-                share_id: shareId
-            }
-            const req2 = {
-                url: 'https://api.aliyundrive.com/v2/share_link/get_share_token',
-                method: 'POST',
-                headers: headers,
-                body: JSON.stringify(data2)
-            };
-            $task.fetch(req2).then(res => {
-                const json = JSON.parse(res.body);
-                if (json.share_token) {
-                    $prefs.setValueForKey(json.share_token, 'ali_share_token');
-                    $done(myResponse);
-                }else{
-                    $done(myResponse);
-                }
-            });
-            
+            $done(myResponse);
         } else {
             $done();
         }
@@ -88,20 +67,17 @@ if (url.indexOf('/webapi/auth.cgi') != -1) {
     if (typeof(body) === 'string') {
         // 当前的请求为加载目录
         if (body.indexOf('list_share') != -1 || body.indexOf('method=list') != -1) {
-            // headers.authorization = 'Bearer ' + accessToken;
-            headers["x-share-token"] = shareToken;
+            headers.authorization = 'Bearer ' + accessToken;
             const parentId = body.match(/folder_path=([^&]*)/) === null ? "root" : body.match(/folder_path=([^&]*)/)[1];
             var isRootFolder = parentId === "root";
             const data = {
-                "image_thumbnail_process": "image/resize,w_160/format,jpeg",
-		        "image_url_process":       "image/resize,w_1920/format,jpeg",
-                "video_thumbnail_process": "video/snapshot,t_1000,f_jpg,ar_auto,w_300",
-                share_id: shareId,
+                drive_id: driveId,
+                fields: '*',
                 parent_file_id: parentId,
                 limit: 200
             };
             const req = {
-                url: 'https://api.aliyundrive.com/adrive/v3/file/list',
+                url: 'https://api.aliyundrive.com/v2/file/list',
                 method: 'POST',
                 headers: headers,
                 body: JSON.stringify(data)
@@ -114,7 +90,6 @@ if (url.indexOf('/webapi/auth.cgi') != -1) {
                         isdir: item.type === 'folder',
                         path: item.file_id,
                         name: item.name,
-                        driveId: item.drive_id,
                         additional: {
                             size: item.size
                         }
@@ -144,20 +119,14 @@ if (url.indexOf('/webapi/auth.cgi') != -1) {
 } else if (url.indexOf('fbdownload') != -1) {
     const hex = url.match(/dlink=%22(.*)%22/)[1];
     const fileid = hex2str(hex);
-    // const body = {
-    //     drive_id: driveId,
-    //     expire_sec: 14400,
-    //     file_id: fileid
-    // };
     const body = {
-        "drive_id": "254244",
-        "file_id":  fileid,
-        "expire_sec": 600,
-        "share_id":   shareId
-      }
+        drive_id: driveId,
+        expire_sec: 14400,
+        file_id: fileid
+    };
     headers.authorization = 'Bearer ' + accessToken;
     const req = {
-        url: 'https://api.aliyundrive.com/v2/file/get_share_link_download_url',
+        url: 'https://api.aliyundrive.com/v2/file/get_download_url',
         method: 'POST',
         headers: headers,
         body: JSON.stringify(body)

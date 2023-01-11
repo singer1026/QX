@@ -31,3 +31,6 @@ qx 远程脚本配置:
 
 [rewrite_local]
 ^http://aliyun\.example\.com url script-analyze-echo-response https://raw.githubusercontent.com/singer1026/QX/main/aliyun.js
+
+[mitm] 
+hostname = %APPEND% aliyun.example.com
